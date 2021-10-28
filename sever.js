@@ -1,5 +1,5 @@
-const { emitNames } = require("./constants");
-const { GamesManager } = require("./gameBase");
+const { emitNames } = require("./utils/constants");
+const { GamesManager } = require("./game/gameBase");
 
 const io = require("socket.io")(8080, {
   cors: {

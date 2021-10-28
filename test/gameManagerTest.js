@@ -1,5 +1,5 @@
 const expect = require("chai").expect;
-const { GamesManager } = require("../gameBase");
+const { GamesManager } = require("../game/gameBase");
 
 describe("GameDataManager", function () {
   describe("add room", function () {
