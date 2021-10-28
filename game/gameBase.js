@@ -1,67 +1,62 @@
 const { shuffleArray, getRandomColors } = require("./gameUtils");
 
-const getDefaultInGameUserData = (username, color) => ({
-  username: username,
+const getDefaultInGameUserData = (color) => ({
   connected: true,
   color: color,
 });
 
 class GameRoom {
   constructor() {
-    this.lobbyPlayers = [];
-    this.inGamePlayers = [];
-    this.currentTurn = null;
+    this.lobbyPlayers = {};
+    this.inGamePlayers = {};
+    this.playerTurns = [];
+    this.currentPlayerTurn = null;
   }
 
-  addPlayer(username) {
-    this.lobbyPlayers.push({ username: username });
-  }
-
-  findPlayerByUsername(username) {
-    return this.inGamePlayers.find((player) => player.username === username);
+  addPlayerToLobby(username, socket) {
+    this.lobbyPlayers[username] = { socket: socket };
   }
 
   disconnectPlayer(username) {
-    this.findPlayerByUsername(username).connected = false;
+    this.inGamePlayers[username].connected = false;
   }
 
-  removePlayer(username) {
-    this.lobbyPlayers = this.lobbyPlayers.filter(
-      (playerData) => playerData.username != username
-    );
-  }
-
-  isRoomEmpty() {
-    const playersInLobby = this.lobbyPlayers.length > 0;
-    const playersAllConected = this.inGamePlayers.every(
-      (player) => player.connected === false
-    );
-    return !playersAllConected && !playersInLobby;
+  removePlayerFromLobby(username) {
+    delete this.lobbyPlayers[username];
   }
 
   isRoomInGame() {
-    return this.inGamePlayers.some((player) => player.connected === true);
+    return Object.keys(this.inGamePlayers).some(
+      (username) => this.inGamePlayers[username].connected === true
+    );
   }
 
   isGameAbandoned() {
     return (
-      this.inGamePlayers.filter((player) => player.connected === true)
-        .length === 1
+      Object.keys(this.inGamePlayers).filter(
+        (username) => this.inGamePlayers[username].connected === true
+      ).length === 1
     );
   }
 
   startGame() {
     this.movePlayersToInGame();
-    this.currentTurn = this.inGamePlayers[0].username;
+    this.currentPlayerTurn = this.inGamePlayers[this.playerTurns[0]];
   }
 
   movePlayersToInGame() {
     const colors = getRandomColors();
-    this.inGamePlayers = this.lobbyPlayers.map((playerData, index) =>
-      getDefaultInGameUserData(playerData.username, colors[index])
-    );
-    this.lobbyPlayers = [];
-    shuffleArray(this.inGamePlayers);
+    let index = 0;
+    for (let username of Object.keys(this.lobbyPlayers)) {
+      this.inGamePlayers[username] = {
+        ...this.lobbyPlayers[username],
+        ...getDefaultInGameUserData(colors[index]),
+      };
+      index++;
+    }
+    this.lobbyPlayers = {};
+    this.playerTurns = Object.keys(this.inGamePlayers);
+    shuffleArray(this.playerTurns);
   }
 }
 
@@ -88,15 +83,15 @@ class GamesManager {
   
   */
 
-  addPlayer(username, roomName) {
+  addPlayerToLobby(username, roomName, socket) {
     const gameRoom = this.getOrCreateGameRoom(roomName);
-    gameRoom.addPlayer(username);
+    gameRoom.addPlayerToLobby(username, socket);
   }
 
-  removePlayerInLobby(username, roomName) {
+  removePlayerFromLobby(username, roomName) {
     const gameRoom = this.gameRooms.get(roomName);
-    gameRoom.removePlayer(username);
-    if (gameRoom.lobbyPlayers.length === 0) {
+    gameRoom.removePlayerFromLobby(username);
+    if (Object.keys(gameRoom.lobbyPlayers).length === 0) {
       this.gameRooms.delete(roomName);
     }
   }

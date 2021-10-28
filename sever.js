@@ -1,5 +1,6 @@
-const { emitNames } = require("./utils/constants");
+const { emitNames, listenerNames } = require("./utils/constants");
 const { GamesManager } = require("./game/gameBase");
+
 
 const io = require("socket.io")(8080, {
   cors: {
@@ -14,7 +15,7 @@ io.on("connection", (socket) => {
   const { username, roomName } = socket.handshake.query;
 
   socket.join(roomName);
-  gamesManager.addPlayer(username, roomName);
+  gamesManager.addPlayerToLobby(username, roomName, socket);
 
   const roomClients = io.sockets.adapter.rooms.get(roomName).size;
   const roomGame = gamesManager.getGameRoom(roomName);
@@ -35,7 +36,7 @@ io.on("connection", (socket) => {
         user: username,
         nClients: roomClients,
       });
-      gamesManager.removePlayerInLobby(username, roomName);
+      gamesManager.removePlayerFromLobby(username, roomName);
     }
   });
 
@@ -50,6 +51,12 @@ io.on("connection", (socket) => {
     console.log(roomGame.lobbyPlayers);
     console.log(roomGame.inGamePlayers);
   }
+
+  /* socket.on(listenerNames.PLAYER_MOVEMENT, (columnIndex) => {
+    if (username === roomGame.currentTurn) {
+      
+    }
+  }); */
 });
 
 /* const gameSpaces = io.of(/^\/game-\w+$/);
