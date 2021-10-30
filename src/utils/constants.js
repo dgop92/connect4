@@ -1,3 +1,5 @@
+const MAX_PLAYERS_PER_GAME = 2;
+
 const listenerNames = {
   PLAYER_MOVEMENT: "player-movement",
 };
@@ -12,5 +14,6 @@ const emitNames = {
 
 module.exports = {
   listenerNames,
-  emitNames
-}
+  emitNames,
+  MAX_PLAYERS_PER_GAME,
+};
