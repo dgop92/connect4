@@ -1,20 +1,37 @@
+const { emitNames } = require("../utils/constants");
 const { shuffleArray, getRandomColors } = require("./gameUtils");
 
 const getDefaultInGameUserData = (color) => ({
   connected: true,
   color: color,
+  cumulativeTime: 0,
 });
+
+const MAX_TIME_PER_TURN = 30; // in seconds
 
 class GameRoom {
   constructor() {
     this.lobbyPlayers = {};
     this.inGamePlayers = {};
+
     this.playerTurns = [];
+    this.currentIndexTurn = 0;
     this.currentPlayerTurn = null;
+
+    this.turnCounter = 0;
+    this.turnIntervalId = 0;
   }
 
   addPlayerToLobby(username, socket) {
     this.lobbyPlayers[username] = { socket: socket };
+  }
+
+  getLobbyPlayers() {
+    return Object.keys(this.lobbyPlayers);
+  }
+
+  getInGamePlayers() {
+    return Object.keys(this.inGamePlayers);
   }
 
   disconnectPlayer(username) {
@@ -35,13 +52,23 @@ class GameRoom {
     return (
       Object.keys(this.inGamePlayers).filter(
         (username) => this.inGamePlayers[username].connected === true
-      ).length === 1
+      ).length === 0
     );
   }
 
   startGame() {
     this.movePlayersToInGame();
-    this.currentPlayerTurn = this.inGamePlayers[this.playerTurns[0]];
+    this.setNextTurn();
+  }
+
+  setNextTurn() {
+    this.currentPlayerTurn =
+      this.inGamePlayers[this.playerTurns[this.currentIndexTurn]];
+    this.currentIndexTurn += 1;
+    if (this.currentIndexTurn == Object.keys(this.inGamePlayers).length) {
+      this.currentIndexTurn = 0;
+    }
+    console.log(`trun ${this.currentIndexTurn}`);
   }
 
   movePlayersToInGame() {
@@ -57,6 +84,39 @@ class GameRoom {
     this.lobbyPlayers = {};
     this.playerTurns = Object.keys(this.inGamePlayers);
     shuffleArray(this.playerTurns);
+  }
+
+  setTurnToPlayer() {
+    const socket = this.currentPlayerTurn.socket;
+    socket.emit(emitNames.PLAYER_TURN);
+
+    this.turnIntervalId = setInterval(() => {
+      this.turnCounter += 1;
+      if (this.turnCounter === MAX_TIME_PER_TURN) {
+        this.currentPlayerTurn.cumulativeTime += this.turnCounter;
+        this.resetTurnInterval();
+        socket.emit(emitNames.TURN_LOST, { timeConsumed: this.turnCounter });
+        this.setNextTurn();
+        this.setTurnToPlayer();
+      }
+    }, 1000);
+  }
+
+  resetTurnInterval() {
+    console.log("clear int");
+    clearInterval(this.turnIntervalId);
+    this.turnCounter = 0;
+  }
+
+  turnPlayed(columnIndex, turnPlayedCallback) {
+    // const socket = this.currentPlayerTurn.socket;
+    turnPlayedCallback({ timeConsumed: this.turnCounter });
+    console.log(
+      `${columnIndex} - ${this.currentPlayerTurn.socket.handshake.query.username}`
+    );
+    this.resetTurnInterval();
+    this.setNextTurn();
+    this.setTurnToPlayer();
   }
 }
 

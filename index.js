@@ -1,6 +1,7 @@
 const { emitNames, listenerNames } = require("./utils/constants");
 const { GamesManager } = require("./game/gameBase");
 
+const MAX_PLAYERS = 2;
 
 const io = require("socket.io")(8080, {
   cors: {
@@ -23,17 +24,18 @@ io.on("connection", (socket) => {
   console.log(roomGame.inGamePlayers);
 
   io.to(roomName).emit(emitNames.JOIN_LOBBY, {
-    user: username,
+    players: roomGame.getLobbyPlayers(),
     nClients: roomClients,
   });
 
   socket.on("disconnect", () => {
     if (roomGame.isRoomInGame()) {
       roomGame.disconnectPlayer(username);
+      console.log(gamesManager.gameRooms.keys())
       gamesManager.shouldDestroyGameRoom(roomName);
     } else {
       socket.to(roomName).emit(emitNames.LEAVE_LOBBY, {
-        user: username,
+        players: roomGame.getLobbyPlayers(),
         nClients: roomClients,
       });
       gamesManager.removePlayerFromLobby(username, roomName);
@@ -41,22 +43,28 @@ io.on("connection", (socket) => {
   });
 
   // Automatic game start
-  if (roomClients >= 3) {
+  if (roomClients >= MAX_PLAYERS) {
     console.log("Just one ?¡");
     roomGame.startGame();
-    io.to(roomName).emit(emitNames.GAME_STARTED, {
-      roomName: roomName,
-      inGamePlayers: roomGame.inGamePlayers,
-    });
+    io.to(roomName).emit(emitNames.GAME_STARTED);
+    roomGame.setTurnToPlayer();
     console.log(roomGame.lobbyPlayers);
     console.log(roomGame.inGamePlayers);
   }
 
-  /* socket.on(listenerNames.PLAYER_MOVEMENT, (columnIndex) => {
-    if (username === roomGame.currentTurn) {
-      
+  socket.on(
+    listenerNames.PLAYER_MOVEMENT,
+    ({ columnIndex: columnIndex }, turnPlayedCallback) => {
+      // improvement ?¿
+      console.log("se llamo el play")
+      console.log(username)
+      console.log(roomGame.currentPlayerTurn.socket.handshake.query.username)
+      if (username === roomGame.currentPlayerTurn.socket.handshake.query.username) {
+        console.log("played by  " + username);
+        roomGame.turnPlayed(columnIndex, turnPlayedCallback);
+      }
     }
-  }); */
+  );
 });
 
 /* const gameSpaces = io.of(/^\/game-\w+$/);
