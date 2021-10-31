@@ -1,9 +1,11 @@
+/* eslint max-classes-per-file: ["error", 2] */
+
 const { emitNames } = require("../utils/constants");
 const { shuffleArray, getRandomColors } = require("./gameUtils");
 
 const getDefaultInGameUserData = (color) => ({
   connected: true,
-  color: color,
+  color,
   cumulativeTime: 0,
 });
 
@@ -23,7 +25,7 @@ class GameRoom {
   }
 
   addPlayerToLobby(username, socket) {
-    this.lobbyPlayers[username] = { socket: socket };
+    this.lobbyPlayers[username] = { socket };
   }
 
   getLobbyPlayers() {
@@ -65,7 +67,7 @@ class GameRoom {
     this.currentPlayerTurn =
       this.inGamePlayers[this.playerTurns[this.currentIndexTurn]];
     this.currentIndexTurn += 1;
-    if (this.currentIndexTurn == Object.keys(this.inGamePlayers).length) {
+    if (this.currentIndexTurn === Object.keys(this.inGamePlayers).length) {
       this.currentIndexTurn = 0;
     }
     console.log(`trun ${this.currentIndexTurn}`);
@@ -74,20 +76,21 @@ class GameRoom {
   movePlayersToInGame() {
     const colors = getRandomColors();
     let index = 0;
-    for (let username of Object.keys(this.lobbyPlayers)) {
+    const lobbyPlayersUsernames = this.getLobbyPlayers();
+    lobbyPlayersUsernames.forEach((username) => {
       this.inGamePlayers[username] = {
         ...this.lobbyPlayers[username],
         ...getDefaultInGameUserData(colors[index]),
       };
-      index++;
-    }
+      index += 1;
+    });
     this.lobbyPlayers = {};
     this.playerTurns = Object.keys(this.inGamePlayers);
     shuffleArray(this.playerTurns);
   }
 
   setTurnToPlayer() {
-    const socket = this.currentPlayerTurn.socket;
+    const { socket } = this.currentPlayerTurn;
     socket.emit(emitNames.PLAYER_TURN);
 
     this.turnIntervalId = setInterval(() => {

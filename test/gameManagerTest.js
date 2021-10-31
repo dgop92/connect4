@@ -1,5 +1,5 @@
-const expect = require("chai").expect;
-const { GamesManager } = require("../game/gameBase");
+const { expect } = require("chai");
+const { GamesManager } = require("../src/game/gameBase");
 
 function addPlayers(gameManager) {
   gameManager.addPlayerToLobby("pedro", "dev");
@@ -8,16 +8,16 @@ function addPlayers(gameManager) {
   gameManager.addPlayerToLobby("willy", "go");
 }
 
-describe("GameDataManager", function () {
-  describe("add room", function () {
-    it("should create room when a user is added", function () {
+describe("GameDataManager", () => {
+  describe("add room", () => {
+    it("should create room when a user is added", () => {
       const gd = new GamesManager();
       gd.addPlayerToLobby("pedro", "dev");
       expect(gd.gameRooms.has("dev")).to.equal(true);
     });
   });
-  describe("addUsers", function () {
-    it("should add users to a specific room given", function () {
+  describe("addUsers", () => {
+    it("should add users to a specific room given", () => {
       const gd = new GamesManager();
       addPlayers(gd);
       const gameRoom = gd.getGameRoom("dev");
@@ -28,16 +28,16 @@ describe("GameDataManager", function () {
       ]);
     });
   });
-  describe("remove empty room", function () {
-    it("should delete a room when there is no players", function () {
+  describe("remove empty room", () => {
+    it("should delete a room when there is no players", () => {
       const gd = new GamesManager();
       gd.addPlayerToLobby("pedro", "dev");
       gd.removePlayerFromLobby("pedro", "dev");
       expect(gd.gameRooms.has("dev")).to.equal(false);
     });
   });
-  describe("move players", function () {
-    it("should move all players to inGame list", function () {
+  describe("move players", () => {
+    it("should move all players to inGame list", () => {
       const gd = new GamesManager();
       addPlayers(gd);
       const gameRoom = gd.getGameRoom("dev");
@@ -53,19 +53,19 @@ describe("GameDataManager", function () {
       console.log(gd.getGameRoom("dev").inGamePlayers);
     });
   });
-  describe("disconnect player", function () {
-    it("should disconnect player", function () {
+  describe("disconnect player", () => {
+    it("should disconnect player", () => {
       const gd = new GamesManager();
       addPlayers(gd);
       const gameRoom = gd.getGameRoom("dev");
       gameRoom.movePlayersToInGame();
       gameRoom.disconnectPlayer("minijuan");
 
-      expect(gameRoom.inGamePlayers["minijuan"].connected).to.equal(false);
+      expect(gameRoom.inGamePlayers.minijuan.connected).to.equal(false);
     });
   });
-  describe("start game", function () {
-    it("should start game and set the turns and colors", function () {
+  describe("start game", () => {
+    it("should start game and set the turns and colors", () => {
       const gd = new GamesManager();
       addPlayers(gd);
       const gameRoom = gd.getGameRoom("dev");

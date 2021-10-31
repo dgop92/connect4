@@ -53,21 +53,16 @@ io.on("connection", (socket) => {
     console.log(roomGame.inGamePlayers);
   }
 
-  socket.on(
-    listenerNames.PLAYER_MOVEMENT,
-    ({ columnIndex: columnIndex }, turnPlayedCallback) => {
-      // improvement ?¿
-      console.log("se llamo el play");
-      console.log(username);
-      console.log(roomGame.currentPlayerTurn.socket.handshake.query.username);
-      if (
-        username === roomGame.currentPlayerTurn.socket.handshake.query.username
-      ) {
-        console.log("played by  " + username);
-        roomGame.turnPlayed(columnIndex, turnPlayedCallback);
-      }
+  socket.on(listenerNames.PLAYER_MOVEMENT, ({ columnIndex }, turnPlayedCallback) => {
+    // improvement ?¿
+    console.log("se llamo el play");
+    console.log(username);
+    console.log(roomGame.currentPlayerTurn.socket.handshake.query.username);
+    if (username === roomGame.currentPlayerTurn.socket.handshake.query.username) {
+      console.log(`played by  ${username}`);
+      roomGame.turnPlayed(columnIndex, turnPlayedCallback);
     }
-  );
+  });
 });
 
 module.exports = {
