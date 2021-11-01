@@ -31,6 +31,28 @@ class GameState {
       }
     }
     this.state[positionToInsert][j] = anotherData;
+    return { i: positionToInsert, j };
+  }
+
+  checkIfPlayerWon(color, newPieceData) {
+    const { i, j } = newPieceData;
+    const row = this.state[i];
+    const column = this.state.map((currentRow) => currentRow[j]);
+    const wonOnVerticalHorizontal =
+      this.checkConnect4InArray(row, color) || this.checkConnect4InArray(column, color);
+    return false;
+  }
+
+  checkConnect4InArray(arr, color) {
+    return false;
+  }
+
+  getSerializableState() {
+    return {
+      table: this.state,
+      m: GAME_TABLE.COLUMNS,
+      n: GAME_TABLE.ROWS,
+    };
   }
 }
 

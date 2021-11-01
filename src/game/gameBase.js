@@ -13,7 +13,8 @@ const getDefaultInGameUserData = (color) => ({
 const MAX_TIME_PER_TURN = 30; // in seconds
 
 class GameRoom {
-  constructor() {
+  constructor(roomName) {
+    this.roomName = roomName;
     this.lobbyPlayers = {};
     this.inGamePlayers = {};
 
@@ -115,15 +116,37 @@ class GameRoom {
     this.turnCounter = 0;
   }
 
-  turnPlayed(columnIndex, turnPlayedCallback) {
+  turnPlayed(columnIndex, turnPlayedCallback, ioBack) {
     // const socket = this.currentPlayerTurn.socket;
-    turnPlayedCallback({ timeConsumed: this.turnCounter });
     console.log(
       `${columnIndex} - ${this.currentPlayerTurn.socket.handshake.query.username}`
     );
-    this.resetTurnInterval();
-    this.setNextTurn();
-    this.setTurnToPlayer();
+    const data = { j: columnIndex, color: this.currentPlayerTurn.color };
+    if (this.gameState.isColumnFull(columnIndex)) {
+      this.currentPlayerTurn.socket.emit(emitNames.INVALID_PLAY, {
+        errorMessage: "This column is full",
+      });
+    } else {
+      const newPieceData = this.gameState.addPiece(data);
+      this.currentPlayerTurn.cumulativeTime += this.turnCounter;
+      const playerWon = this.gameState.checkIfPlayerWon(
+        this.currentPlayerTurn.color,
+        newPieceData
+      );
+      if (playerWon) {
+        ioBack.to(this.roomName).emit(emitNames.PLAYER_WON, {
+          state: this.gameState.getSerializableState(),
+        });
+      } else {
+        turnPlayedCallback({ timeConsumed: this.turnCounter });
+        ioBack.to(this.roomName).emit(emitNames.UPDATE_GAME, {
+          state: this.gameState.getSerializableState(),
+        });
+        this.resetTurnInterval();
+        this.setNextTurn();
+        this.setTurnToPlayer();
+      }
+    }
   }
 }
 
@@ -135,7 +158,7 @@ class GamesManager {
   getOrCreateGameRoom(roomName) {
     return (
       this.gameRooms.get(roomName) ||
-      this.gameRooms.set(roomName, new GameRoom()).get(roomName)
+      this.gameRooms.set(roomName, new GameRoom(roomName)).get(roomName)
     );
   }
 

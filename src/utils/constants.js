@@ -9,7 +9,10 @@ const emitNames = {
   JOIN_LOBBY: "join-lobby",
   LEAVE_LOBBY: "leave-lobby",
   PLAYER_TURN: "player-turn",
+  PLAYER_WON: "player-won",
   TURN_LOST: "turn-lost",
+  INVALID_PLAY: "invalid-play",
+  UPDATE_GAME: "update-game",
 };
 
 module.exports = {

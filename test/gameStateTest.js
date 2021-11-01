@@ -5,7 +5,9 @@ describe("GameState", () => {
   describe("#addPiece", () => {
     it("should add piece to the bottom", () => {
       const gs = new GameState();
-      gs.addPiece({ j: 0, color: "red" });
+      const { i: iPos, j: jPos } = gs.addPiece({ j: 0, color: "red" });
+      expect(iPos).to.equal(GAME_TABLE.ROWS - 1);
+      expect(jPos).to.equal(0);
       expect(gs.state[GAME_TABLE.ROWS - 1][0].color).to.equal("red");
     });
   });

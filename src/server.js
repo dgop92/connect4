@@ -48,6 +48,9 @@ io.on("connection", (socket) => {
     console.log("Just one ?¡");
     roomGame.startGame();
     io.to(roomName).emit(emitNames.GAME_STARTED);
+    io.to(roomName).emit(emitNames.UPDATE_GAME, {
+      state: roomGame.gameState.getSerializableState(),
+    });
     roomGame.setTurnToPlayer();
     console.log(roomGame.lobbyPlayers);
     console.log(roomGame.inGamePlayers);
@@ -60,7 +63,7 @@ io.on("connection", (socket) => {
     console.log(roomGame.currentPlayerTurn.socket.handshake.query.username);
     if (username === roomGame.currentPlayerTurn.socket.handshake.query.username) {
       console.log(`played by  ${username}`);
-      roomGame.turnPlayed(columnIndex, turnPlayedCallback);
+      roomGame.turnPlayed(columnIndex, turnPlayedCallback, io);
     }
   });
 });
