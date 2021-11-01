@@ -1,6 +1,7 @@
 /* eslint max-classes-per-file: ["error", 2] */
 
 const { emitNames } = require("../utils/constants");
+const { GameState } = require("./gameState");
 const { shuffleArray, getRandomColors } = require("./gameUtils");
 
 const getDefaultInGameUserData = (color) => ({
@@ -22,6 +23,8 @@ class GameRoom {
 
     this.turnCounter = 0;
     this.turnIntervalId = 0;
+
+    this.gameState = null;
   }
 
   addPlayerToLobby(username, socket) {
@@ -61,6 +64,7 @@ class GameRoom {
   startGame() {
     this.movePlayersToInGame();
     this.setNextTurn();
+    this.gameState = new GameState();
   }
 
   setNextTurn() {
@@ -160,7 +164,9 @@ class GamesManager {
   }
 
   shouldDestroyGameRoom(roomName) {
-    if (this.gameRooms.get(roomName).isGameAbandoned()) {
+    const gameRoom = this.gameRooms.get(roomName);
+    if (gameRoom.isGameAbandoned()) {
+      clearInterval(gameRoom.turnIntervalId);
       this.gameRooms.delete(roomName);
     }
   }
