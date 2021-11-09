@@ -62,10 +62,10 @@ class GameRoom {
     );
   }
 
-  startGame() {
+  startGame(n, m) {
     this.movePlayersToInGame();
     this.setNextTurn();
-    this.gameState = new GameState();
+    this.gameState = new GameState(n, m);
   }
 
   setNextTurn() {

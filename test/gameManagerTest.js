@@ -1,5 +1,6 @@
 const { expect } = require("chai");
 const { GamesManager } = require("../src/game/gameBase");
+const { DEFAULT_GAME_TABLE } = require("../src/game/gameState");
 
 function addPlayers(gameManager) {
   gameManager.addPlayerToLobby("pedro", "dev");
@@ -69,7 +70,7 @@ describe("GameDataManager", () => {
       const gd = new GamesManager();
       addPlayers(gd);
       const gameRoom = gd.getGameRoom("dev");
-      gameRoom.startGame();
+      gameRoom.startGame(DEFAULT_GAME_TABLE.ROWS, DEFAULT_GAME_TABLE.COLUMNS);
 
       console.log(gameRoom.playerTurns);
 

@@ -1,6 +1,10 @@
-const GAME_TABLE = {
+const DEFAULT_GAME_TABLE = {
   ROWS: 6,
   COLUMNS: 7,
+  MIN_COLUMNS: 6,
+  MIN_ROWS: 6,
+  MAX_COLUMNS: 8,
+  MAX_ROWS: 8,
 };
 
 function getEmptyRow(n) {
@@ -12,8 +16,11 @@ function createGameTableState(n, m) {
 }
 
 class GameState {
-  constructor() {
-    this.state = createGameTableState(GAME_TABLE.ROWS, GAME_TABLE.COLUMNS);
+  
+  constructor(n, m) {
+    this.n = n;
+    this.m = m;
+    this.state = createGameTableState(this.n, this.m);
   }
 
   isColumnFull(j) {
@@ -22,7 +29,7 @@ class GameState {
 
   addPiece(data) {
     const { j, ...anotherData } = data;
-    let positionToInsert = GAME_TABLE.ROWS - 1;
+    let positionToInsert = this.n - 1;
     for (let i = 0; i < this.state.length; i += 1) {
       const piece = this.state[i][j];
       if (piece !== null) {
@@ -50,13 +57,13 @@ class GameState {
   getSerializableState() {
     return {
       table: this.state,
-      m: GAME_TABLE.COLUMNS,
-      n: GAME_TABLE.ROWS,
+      m: this.m,
+      n: this.n,
     };
   }
 }
 
 module.exports = {
   GameState,
-  GAME_TABLE,
+  DEFAULT_GAME_TABLE,
 };
