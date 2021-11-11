@@ -2,11 +2,10 @@
 
 const { emitNames } = require("../utils/constants");
 const { GameState } = require("./gameState");
-const { shuffleArray, getRandomColors } = require("./gameUtils");
+const { shuffleArray, playerColors } = require("./gameUtils");
 
-const getDefaultInGameUserData = (color) => ({
+const getDefaultInGameUserData = () => ({
   connected: true,
-  color,
   cumulativeTime: 0,
 });
 
@@ -26,18 +25,37 @@ class GameRoom {
     this.turnIntervalId = 0;
 
     this.gameState = null;
+    this.avaliableColors = Object.values(playerColors);
+    shuffleArray(this.avaliableColors);
   }
 
   addPlayerToLobby(username, socket) {
-    this.lobbyPlayers[username] = { socket };
+    // TODO set max players
+    const color = this.avaliableColors.pop();
+    this.lobbyPlayers[username] = { socket, color };
   }
 
-  getLobbyPlayers() {
-    return Object.keys(this.lobbyPlayers);
+  // TODO create common method
+  getLobbyPlayers({ removeSerializableData = true } = {}) {
+    return Object.keys(this.lobbyPlayers).map((username) => {
+      const playerData = this.lobbyPlayers[username];
+      if (removeSerializableData) {
+        const { socket, ...currentPlayerData } = playerData;
+        return { ...currentPlayerData, username };
+      }
+      return { ...playerData, username };
+    });
   }
 
-  getInGamePlayers() {
-    return Object.keys(this.inGamePlayers);
+  getInGamePlayers({ removeSerializableData = true } = {}) {
+    return Object.keys(this.inGamePlayers).map((username) => {
+      const playerData = this.inGamePlayers[username];
+      if (removeSerializableData) {
+        const { socket, ...currentPlayerData } = playerData;
+        return { ...currentPlayerData, username };
+      }
+      return { ...playerData, username };
+    });
   }
 
   disconnectPlayer(username) {
@@ -75,19 +93,17 @@ class GameRoom {
     if (this.currentIndexTurn === Object.keys(this.inGamePlayers).length) {
       this.currentIndexTurn = 0;
     }
-    console.log(`trun ${this.currentIndexTurn}`);
   }
 
   movePlayersToInGame() {
-    const colors = getRandomColors();
-    let index = 0;
-    const lobbyPlayersUsernames = this.getLobbyPlayers();
+    const lobbyPlayersUsernames = this.getLobbyPlayers().map(
+      (player) => player.username
+    );
     lobbyPlayersUsernames.forEach((username) => {
       this.inGamePlayers[username] = {
         ...this.lobbyPlayers[username],
-        ...getDefaultInGameUserData(colors[index]),
+        ...getDefaultInGameUserData(),
       };
-      index += 1;
     });
     this.lobbyPlayers = {};
     this.playerTurns = Object.keys(this.inGamePlayers);
@@ -141,6 +157,7 @@ class GameRoom {
         turnPlayedCallback({ timeConsumed: this.turnCounter });
         ioBack.to(this.roomName).emit(emitNames.UPDATE_GAME, {
           state: this.gameState.getSerializableState(),
+          players: this.getInGamePlayers(),
         });
         this.resetTurnInterval();
         this.setNextTurn();

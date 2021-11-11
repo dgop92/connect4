@@ -49,6 +49,7 @@ io.on("connection", (socket) => {
     io.to(roomName).emit(emitNames.GAME_STARTED);
     io.to(roomName).emit(emitNames.UPDATE_GAME, {
       state: roomGame.gameState.getSerializableState(),
+      players: roomGame.getInGamePlayers(),
     });
     roomGame.setTurnToPlayer();
   }

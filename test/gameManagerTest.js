@@ -37,7 +37,7 @@ describe("GameDataManager", () => {
       expect(gd.gameRooms.has("dev")).to.equal(false);
     });
   });
-  describe("move players", () => {
+  describe("#movePlayersToInGame", () => {
     it("should move all players to inGame list", () => {
       const gd = new GamesManager();
       addPlayers(gd);
@@ -54,7 +54,7 @@ describe("GameDataManager", () => {
       console.log(gd.getGameRoom("dev").inGamePlayers);
     });
   });
-  describe("disconnect player", () => {
+  describe("#disconnectPlayer", () => {
     it("should disconnect player", () => {
       const gd = new GamesManager();
       addPlayers(gd);
@@ -63,6 +63,22 @@ describe("GameDataManager", () => {
       gameRoom.disconnectPlayer("minijuan");
 
       expect(gameRoom.inGamePlayers.minijuan.connected).to.equal(false);
+    });
+  });
+  describe("#startGame", () => {
+    it("should start game and set the turns and colors", () => {
+      const gd = new GamesManager();
+      addPlayers(gd);
+      const gameRoom = gd.getGameRoom("dev");
+      gameRoom.startGame(DEFAULT_GAME_TABLE.ROWS, DEFAULT_GAME_TABLE.COLUMNS);
+
+      console.log(gameRoom.playerTurns);
+
+      expect(gameRoom.currentPlayerTurn.color).to.equal(
+        gameRoom.inGamePlayers[gameRoom.playerTurns[0]].color
+      );
+
+      console.log(gd.getGameRoom("dev").inGamePlayers);
     });
   });
   describe("start game", () => {
@@ -79,6 +95,32 @@ describe("GameDataManager", () => {
       );
 
       console.log(gd.getGameRoom("dev").inGamePlayers);
+    });
+  });
+  describe("check getPlayers", () => {
+    it("should check the existence of players in the lobby and 'in game'", () => {
+      const gd = new GamesManager();
+      addPlayers(gd);
+      const gameRoom = gd.getGameRoom("dev");
+
+      gameRoom.getLobbyPlayers().forEach((player) => {
+        expect(player).to.have.property("color");
+        expect(player).to.have.property("username");
+      });
+
+      console.log(gd.getGameRoom("dev").getLobbyPlayers());
+
+      gameRoom.startGame(DEFAULT_GAME_TABLE.ROWS, DEFAULT_GAME_TABLE.COLUMNS);
+
+      const usernames = [];
+      gameRoom.getInGamePlayers().forEach((player) => {
+        expect(player).to.have.property("color");
+        expect(player).to.have.property("username");
+        usernames.push(player.username);
+      });
+      expect(usernames).to.have.members(["juan", "pedro", "minijuan"]);
+
+      console.log(gd.getGameRoom("dev").getInGamePlayers());
     });
   });
 });
