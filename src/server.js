@@ -17,52 +17,64 @@ const gamesManager = new GamesManager();
 
 io.on("connection", (socket) => {
   const { username, roomName, n, m } = socket.handshake.query;
-  const [nRows, nColumns] = getGameTableFromRawData(n, m);
-  socket.data.username = username;
-  socket.join(roomName);
-  gamesManager.addPlayerToLobby(username, roomName, socket);
+  const earlyRoomClients = io.sockets.adapter.rooms.get(roomName)?.size || 0;
 
-  const roomClients = io.sockets.adapter.rooms.get(roomName).size;
-  const roomGame = gamesManager.getGameRoom(roomName);
+  if (earlyRoomClients === MAX_PLAYERS_PER_GAME) {
+    // so far if the lobby is full, you are disconnected TODO: improve
+    socket.disconnect();
+  } else {
+    const [nRows, nColumns] = getGameTableFromRawData(n, m);
+    socket.emit(emitNames.MOVE_TO_LOBBY);
 
-  io.to(roomName).emit(emitNames.JOIN_LOBBY, {
-    players: roomGame.getLobbyPlayers(),
-    nClients: roomClients,
-  });
+    socket.data.username = username;
+    socket.join(roomName);
+    gamesManager.addPlayerToLobby(username, roomName, socket);
 
-  socket.on("disconnect", () => {
-    if (roomGame.isRoomInGame()) {
-      roomGame.disconnectPlayer(username);
-      gamesManager.shouldDestroyGameRoom(roomName);
-    } else {
-      socket.to(roomName).emit(emitNames.LEAVE_LOBBY, {
-        players: roomGame.getLobbyPlayers(),
-        nClients: roomClients,
-      });
-      gamesManager.removePlayerFromLobby(username, roomName);
-    }
-  });
+    const roomGame = gamesManager.getGameRoom(roomName);
+    const roomClients = io.sockets.adapter.rooms.get(roomName)?.size || 0;
 
-  // Automatic game start
-  if (roomClients >= MAX_PLAYERS_PER_GAME) {
-    roomGame.startGame(nRows, nColumns);
-    io.to(roomName).emit(emitNames.GAME_STARTED);
-    io.to(roomName).emit(emitNames.UPDATE_GAME, {
-      state: roomGame.gameState.getSerializableState(),
-      players: roomGame.getInGamePlayers(),
+    io.to(roomName).emit(emitNames.JOIN_LOBBY, {
+      players: roomGame.getLobbyPlayers(),
+      nClients: roomClients,
     });
-    roomGame.setTurnToPlayer();
-  }
 
-  socket.on(listenerNames.PLAYER_MOVEMENT, ({ columnIndex }, turnPlayedCallback) => {
-    // improvement ?¿
-    console.log(username);
-    console.log(roomGame.currentPlayerTurn.socket.handshake.query.username);
-    if (username === roomGame.currentPlayerTurn.socket.handshake.query.username) {
-      console.log(`played by  ${username}`);
-      roomGame.turnPlayed(columnIndex, turnPlayedCallback, io);
+    socket.on("disconnect", () => {
+      if (roomGame.isRoomInGame()) {
+        roomGame.disconnectPlayer(username);
+        gamesManager.shouldDestroyGameRoom(roomName);
+      } else {
+        socket.to(roomName).emit(emitNames.LEAVE_LOBBY, {
+          players: roomGame.getLobbyPlayers(),
+          nClients: roomClients,
+        });
+        gamesManager.removePlayerFromLobby(username, roomName);
+      }
+    });
+
+    // if there is only one player in the room, that means this socket is teh creator
+    if (roomClients === 1) {
+      socket.on(listenerNames.REQUEST_START_GAME, () => {
+        roomGame.startGame(nRows, nColumns);
+        io.to(roomName).emit(emitNames.GAME_STARTED);
+        io.to(roomName).emit(emitNames.UPDATE_GAME, {
+          state: roomGame.gameState.getSerializableState(),
+          players: roomGame.getInGamePlayers(),
+        });
+        roomGame.setTurnToPlayer();
+      });
     }
-  });
+
+    roomGame.setOnTurnTimeTick((time) =>
+      io.to(roomName).emit(emitNames.TURN_TICK, { time })
+    );
+
+    socket.on(listenerNames.PLAYER_MOVEMENT, ({ columnIndex }, turnPlayedCallback) => {
+      // improvement ?¿
+      if (username === roomGame.currentPlayerTurn.socket.handshake.query.username) {
+        roomGame.turnPlayed(columnIndex, turnPlayedCallback, io);
+      }
+    });
+  }
 });
 
 module.exports = {

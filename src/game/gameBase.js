@@ -27,6 +27,8 @@ class GameRoom {
     this.gameState = null;
     this.avaliableColors = Object.values(playerColors);
     shuffleArray(this.avaliableColors);
+
+    this.onTurnTimeTick = () => {};
   }
 
   addPlayerToLobby(username, socket) {
@@ -110,12 +112,17 @@ class GameRoom {
     shuffleArray(this.playerTurns);
   }
 
+  setOnTurnTimeTick(func){
+    this.onTurnTimeTick = func;
+  }
+
   setTurnToPlayer() {
     const { socket } = this.currentPlayerTurn;
     socket.emit(emitNames.PLAYER_TURN);
 
     this.turnIntervalId = setInterval(() => {
       this.turnCounter += 1;
+      this.onTurnTimeTick(this.turnCounter);
       if (this.turnCounter === MAX_TIME_PER_TURN) {
         this.currentPlayerTurn.cumulativeTime += this.turnCounter;
         this.resetTurnInterval();
@@ -134,9 +141,6 @@ class GameRoom {
 
   turnPlayed(columnIndex, turnPlayedCallback, ioBack) {
     // const socket = this.currentPlayerTurn.socket;
-    console.log(
-      `${columnIndex} - ${this.currentPlayerTurn.socket.handshake.query.username}`
-    );
     const data = { j: columnIndex, color: this.currentPlayerTurn.color };
     if (this.gameState.isColumnFull(columnIndex)) {
       this.currentPlayerTurn.socket.emit(emitNames.INVALID_PLAY, {
