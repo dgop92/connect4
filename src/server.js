@@ -13,7 +13,7 @@ const io = new Server(wsHttpServer, {
   },
 });
 
-const gamesManager = new GamesManager();
+const gamesManager = new GamesManager(io);
 
 io.on("connection", (socket) => {
   const { username, roomName, n, m } = socket.handshake.query;
@@ -54,13 +54,16 @@ io.on("connection", (socket) => {
     // if there is only one player in the room, that means this socket is teh creator
     if (roomClients === 1) {
       socket.on(listenerNames.REQUEST_START_GAME, () => {
-        roomGame.startGame(nRows, nColumns);
-        io.to(roomName).emit(emitNames.GAME_STARTED);
-        io.to(roomName).emit(emitNames.UPDATE_GAME, {
-          state: roomGame.gameState.getSerializableState(),
-          players: roomGame.getInGamePlayers(),
-        });
-        roomGame.setTurnToPlayer();
+        const currentRoomClients = io.sockets.adapter.rooms.get(roomName)?.size;
+        if (currentRoomClients === MAX_PLAYERS_PER_GAME) {
+          roomGame.startGame(nRows, nColumns);
+          io.to(roomName).emit(emitNames.GAME_STARTED);
+          io.to(roomName).emit(emitNames.UPDATE_GAME, {
+            state: roomGame.gameState.getSerializableState(),
+            players: roomGame.getInGamePlayers(),
+          });
+          roomGame.setTurnToPlayer();
+        }
       });
     }
 
@@ -71,7 +74,7 @@ io.on("connection", (socket) => {
     socket.on(listenerNames.PLAYER_MOVEMENT, ({ columnIndex }, turnPlayedCallback) => {
       // improvement ?¿
       if (username === roomGame.currentPlayerTurn.socket.handshake.query.username) {
-        roomGame.turnPlayed(columnIndex, turnPlayedCallback, io);
+        roomGame.turnPlayed(columnIndex, turnPlayedCallback);
       }
     });
   }

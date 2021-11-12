@@ -12,8 +12,9 @@ const getDefaultInGameUserData = () => ({
 const MAX_TIME_PER_TURN = 30; // in seconds
 
 class GameRoom {
-  constructor(roomName) {
+  constructor(roomName, ioBack) {
     this.roomName = roomName;
+    this.ioBack = ioBack;
     this.lobbyPlayers = {};
     this.inGamePlayers = {};
 
@@ -112,13 +113,14 @@ class GameRoom {
     shuffleArray(this.playerTurns);
   }
 
-  setOnTurnTimeTick(func){
+  setOnTurnTimeTick(func) {
     this.onTurnTimeTick = func;
   }
 
   setTurnToPlayer() {
-    const { socket } = this.currentPlayerTurn;
-    socket.emit(emitNames.PLAYER_TURN);
+    this.ioBack
+      .to(this.roomName)
+      .emit(emitNames.PLAYER_TURN, this.getCurrentTurnPlayer());
 
     this.turnIntervalId = setInterval(() => {
       this.turnCounter += 1;
@@ -126,7 +128,9 @@ class GameRoom {
       if (this.turnCounter === MAX_TIME_PER_TURN) {
         this.currentPlayerTurn.cumulativeTime += this.turnCounter;
         this.resetTurnInterval();
-        socket.emit(emitNames.TURN_LOST, { timeConsumed: this.turnCounter });
+        this.ioBack
+          .to(this.roomName)
+          .emit(emitNames.TURN_LOST, this.getCurrentTurnPlayer());
         this.setNextTurn();
         this.setTurnToPlayer();
       }
@@ -139,7 +143,7 @@ class GameRoom {
     this.turnCounter = 0;
   }
 
-  turnPlayed(columnIndex, turnPlayedCallback, ioBack) {
+  turnPlayed(columnIndex, turnPlayedCallback) {
     // const socket = this.currentPlayerTurn.socket;
     const data = { j: columnIndex, color: this.currentPlayerTurn.color };
     if (this.gameState.isColumnFull(columnIndex)) {
@@ -154,32 +158,40 @@ class GameRoom {
         newPieceData
       );
       if (playerWon) {
-        ioBack.to(this.roomName).emit(emitNames.PLAYER_WON, {
+        this.ioBack.to(this.roomName).emit(emitNames.PLAYER_WON, {
           state: this.gameState.getSerializableState(),
         });
       } else {
         turnPlayedCallback({ timeConsumed: this.turnCounter });
-        ioBack.to(this.roomName).emit(emitNames.UPDATE_GAME, {
+        this.resetTurnInterval();
+        this.setNextTurn();
+        this.ioBack.to(this.roomName).emit(emitNames.UPDATE_GAME, {
           state: this.gameState.getSerializableState(),
           players: this.getInGamePlayers(),
         });
-        this.resetTurnInterval();
-        this.setNextTurn();
         this.setTurnToPlayer();
       }
     }
   }
+
+  getCurrentTurnPlayer() {
+    const playerData = this.currentPlayerTurn;
+    const { socket, ...currentPlayerData } = playerData;
+    const username = this.playerTurns[this.currentIndexTurn];
+    return { ...currentPlayerData, username };
+  }
 }
 
 class GamesManager {
-  constructor() {
+  constructor(ioBack) {
     this.gameRooms = new Map();
+    this.ioBack = ioBack;
   }
 
   getOrCreateGameRoom(roomName) {
     return (
       this.gameRooms.get(roomName) ||
-      this.gameRooms.set(roomName, new GameRoom(roomName)).get(roomName)
+      this.gameRooms.set(roomName, new GameRoom(roomName, this.ioBack)).get(roomName)
     );
   }
 
