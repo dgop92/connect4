@@ -47,6 +47,11 @@ class GameState {
     return this.state[0][j] !== null;
   }
 
+  isTableFull() {
+    const topRow = this.state[0];
+    return topRow.every((cellData) => cellData != null);
+  }
+
   addPiece(data) {
     const { j, ...anotherData } = data;
     let positionToInsert = this.n - 1;

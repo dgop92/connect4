@@ -177,7 +177,21 @@ describe("GameState", () => {
 
       const playerWon2 = gs.checkIfPlayerWon(playerColors.ORANGE, { i: 0, j: 3 });
       expect(playerWon2).to.be.equal(false);
+    });
+  });
+  describe("#isTableFull", () => {
+    it("should return true if table is full", () => {
+      const gs = new GameState(3, 4);
+      for (let j = 0; j < 4; j += 1) {
+        gs.state[0][j] = { color: playerColors.RED };
+      }
+      const isFull = gs.isTableFull();
+      expect(isFull).to.be.equal(true);
 
+      gs.state[0][1] = null;
+
+      const isFull2 = gs.isTableFull();
+      expect(isFull2).to.be.equal(false);
     });
   });
 });

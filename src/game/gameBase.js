@@ -165,6 +165,13 @@ class GameRoom {
         });
         this.resetTurnInterval();
         this.gameFinished = true;
+      } else if (this.gameState.isTableFull()) {
+        this.ioBack.to(this.roomName).emit(emitNames.TIED_GAME, {
+          state: this.gameState.getSerializableState(),
+          players: this.getInGamePlayers(),
+        });
+        this.resetTurnInterval();
+        this.gameFinished = true;
       } else {
         turnPlayedCallback({ timeConsumed: this.turnCounter });
         this.resetTurnInterval();

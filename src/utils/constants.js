@@ -12,6 +12,7 @@ const emitNames = {
   LEAVE_LOBBY: "leave-lobby",
   PLAYER_TURN: "player-turn",
   PLAYER_WON: "player-won",
+  TIED_GAME: "tied-game",
   TURN_LOST: "turn-lost",
   TURN_TICK: "turn-tick",
   INVALID_PLAY: "invalid-play",
