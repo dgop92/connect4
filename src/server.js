@@ -73,7 +73,10 @@ io.on("connection", (socket) => {
 
     socket.on(listenerNames.PLAYER_MOVEMENT, ({ columnIndex }, turnPlayedCallback) => {
       // improvement ?¿
-      if (username === roomGame.currentPlayerTurn.socket.handshake.query.username) {
+      if (
+        username === roomGame.currentPlayerTurn.socket.data.username &&
+        !roomGame.gameFinished
+      ) {
         roomGame.turnPlayed(columnIndex, turnPlayedCallback);
       }
     });

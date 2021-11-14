@@ -25,6 +25,7 @@ class GameRoom {
     this.turnCounter = 0;
     this.turnIntervalId = 0;
 
+    this.gameFinished = false;
     this.gameState = null;
     this.avaliableColors = Object.values(playerColors);
     shuffleArray(this.avaliableColors);
@@ -160,7 +161,10 @@ class GameRoom {
       if (playerWon) {
         this.ioBack.to(this.roomName).emit(emitNames.PLAYER_WON, {
           state: this.gameState.getSerializableState(),
+          players: this.getInGamePlayers(),
         });
+        this.resetTurnInterval();
+        this.gameFinished = true;
       } else {
         turnPlayedCallback({ timeConsumed: this.turnCounter });
         this.resetTurnInterval();

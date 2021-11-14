@@ -15,8 +15,28 @@ function createGameTableState(n, m) {
   return Array.from({ length: n }, () => getEmptyRow(m));
 }
 
+function checkConnect4InArray(arr, color) {
+  // cannot define a connect 4 with length less than 4
+  if (arr.length <= 3) {
+    return false;
+  }
+  let consecutiveColor = 0;
+  return arr.some((cellData) => {
+    if (cellData?.color === color) {
+      consecutiveColor += 1;
+    } else {
+      consecutiveColor = 0;
+    }
+
+    if (consecutiveColor === 4) {
+      return true;
+    }
+
+    return false;
+  });
+}
+
 class GameState {
-  
   constructor(n, m) {
     this.n = n;
     this.m = m;
@@ -45,13 +65,48 @@ class GameState {
     const { i, j } = newPieceData;
     const row = this.state[i];
     const column = this.state.map((currentRow) => currentRow[j]);
-    const wonOnVerticalHorizontal =
-      this.checkConnect4InArray(row, color) || this.checkConnect4InArray(column, color);
-    return false;
+    const mainDiagonal = this.getMainDiagonal(i, j);
+    const secondaryDiagonal = this.getSecondaryDiagonal(i, j);
+
+    const wonOnHorizontal = checkConnect4InArray(row, color);
+    const wonOnVertical = checkConnect4InArray(column, color);
+    const wonOnMainDiagonal = checkConnect4InArray(mainDiagonal, color);
+    const wonOnSecondaryDiagonal = checkConnect4InArray(secondaryDiagonal, color);
+    return (
+      wonOnHorizontal || wonOnVertical || wonOnMainDiagonal || wonOnSecondaryDiagonal
+    );
   }
 
-  checkConnect4InArray(arr, color) {
-    return false;
+  getMainDiagonal(iPos, jPos) {
+    let i = iPos;
+    let j = jPos;
+    while (i > 0 && j > 0) {
+      i -= 1;
+      j -= 1;
+    }
+    const arr = [];
+    while (i < this.n && j < this.m) {
+      arr.push(this.state[i][j]);
+      i += 1;
+      j += 1;
+    }
+    return arr;
+  }
+
+  getSecondaryDiagonal(iPos, jPos) {
+    let i = iPos;
+    let j = jPos;
+    while (i > 0 && j < this.m - 1) {
+      i -= 1;
+      j += 1;
+    }
+    const arr = [];
+    while (i < this.n && j >= 0) {
+      arr.push(this.state[i][j]);
+      i += 1;
+      j -= 1;
+    }
+    return arr;
   }
 
   getSerializableState() {
@@ -66,4 +121,5 @@ class GameState {
 module.exports = {
   GameState,
   DEFAULT_GAME_TABLE,
+  checkConnect4InArray,
 };
