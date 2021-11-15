@@ -40,20 +40,20 @@ describe("GameState", () => {
     it("should handle any number of rows and columns without errors", () => {
       const inputData = [
         {
-          n: 6,
-          m: 8,
+          n: "6",
+          m: "8",
           rows: 6,
           columns: 8,
         },
         {
-          n: 3,
-          m: 2,
+          n: "3",
+          m: "2",
           rows: DEFAULT_GAME_TABLE.ROWS,
           columns: DEFAULT_GAME_TABLE.COLUMNS,
         },
         {
-          n: 12,
-          m: 9,
+          n: "12",
+          m: "9",
           rows: DEFAULT_GAME_TABLE.ROWS,
           columns: DEFAULT_GAME_TABLE.COLUMNS,
         },

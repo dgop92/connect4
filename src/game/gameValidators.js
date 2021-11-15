@@ -4,12 +4,14 @@ function getGameTableFromRawData(n, m) {
   let rows = DEFAULT_GAME_TABLE.ROWS;
   let columns = DEFAULT_GAME_TABLE.COLUMNS;
 
-  if (Number.isInteger(n) && n >= 6 && n <= 8) {
-    rows = n;
+  const nAsNumber = Number(n);
+  if (Number.isInteger(nAsNumber) && nAsNumber >= 6 && nAsNumber <= 8) {
+    rows = nAsNumber;
   }
 
-  if (Number.isInteger(m) && m >= 6 && m <= 8) {
-    columns = m;
+  const mAsNumber = Number(m);
+  if (Number.isInteger(mAsNumber) && mAsNumber >= 6 && mAsNumber <= 8) {
+    columns = mAsNumber;
   }
 
   return [rows, columns];
