@@ -139,7 +139,6 @@ class GameRoom {
   }
 
   resetTurnInterval() {
-    console.log("clear int");
     clearInterval(this.turnIntervalId);
     this.turnCounter = 0;
   }

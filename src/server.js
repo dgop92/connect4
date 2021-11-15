@@ -6,11 +6,15 @@ const { getGameTableFromRawData } = require("./game/gameValidators");
 const { emitNames, listenerNames, MAX_PLAYERS_PER_GAME } = require("./utils/constants");
 
 const wsHttpServer = createServer();
+const corsOptions = process.env.CLIENT_URLS
+  ? {
+      origin: process.env.CLIENT_URLS.split(","),
+      methods: ["GET", "POST"],
+    }
+  : {};
+
 const io = new Server(wsHttpServer, {
-  cors: {
-    origin: process.env.CLIENT_URLS.split(","),
-    methods: ["GET", "POST"],
-  },
+  cors: corsOptions,
 });
 
 const gamesManager = new GamesManager(io);
