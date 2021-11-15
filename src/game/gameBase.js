@@ -187,8 +187,7 @@ class GameRoom {
   getCurrentTurnPlayer() {
     const playerData = this.currentPlayerTurn;
     const { socket, ...currentPlayerData } = playerData;
-    const username = this.playerTurns[this.currentIndexTurn];
-    return { ...currentPlayerData, username };
+    return { ...currentPlayerData, username: socket.data.username };
   }
 }
 
